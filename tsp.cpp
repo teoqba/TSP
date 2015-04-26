@@ -160,7 +160,7 @@ class Tour {
 Tour::Tour(const char* filename) {
 	fname = filename;
 	srand (time(NULL));
-	Cities cities(filename);
+	Cities cities(fname);
 	int n = cities.getNoCities();
 	tour = new int[n];
 	for (int i=0; i<n; i++) {
@@ -169,6 +169,13 @@ Tour::Tour(const char* filename) {
 	//Prepare random tour
 	this -> shuffle(tour,n);
 	//Find optimal tour
+	this -> MC_SA(tour, n, cities);
+	tourLength = this -> calcTourLength(tour, n, cities);
+}
+
+void Tour::restart() {
+	Cities cities(fname);
+	int n = cities.getNoCities();
 	this -> MC_SA(tour, n, cities);
 	tourLength = this -> calcTourLength(tour, n, cities);
 }
@@ -206,13 +213,13 @@ void Tour::MC_SA(int *A, int n, Cities cities){
 	float newTourL; // new tour length
 	float delta;
 
-	int i,j,tmpi,tmpj,x;
+	int i,j,step,tmpi,tmpj,x;
 
 	tourL = this -> calcTourLength(A, n, cities);
 	temp = startTemp;
-
+	step = 0;
 	while (temp > endTemp) {
-		cout << "Tour : " << tourL << "\n";
+		cout  << step << " " << temp<< " " << tourL << "\n";
 		i = rand() %n;
 		j = rand() %n;
 		tmpi = A[i];
@@ -230,6 +237,7 @@ void Tour::MC_SA(int *A, int n, Cities cities){
 			A[j] = tmpj;
 		}
 		temp = temp * coolF;
+		step ++;
 	}
 }	
 
@@ -245,8 +253,10 @@ int main()
 {
 	Tour tour("cityList.txt");
 	float l = tour.getTourLength();
-	int *t = tour.getTour();
 	cout << "Final tour length: " << l << "\n";
+//	tour.restart();
+//	l = tour.getTourLength();
+//	cout << "Final tour length: " << l << "\n";
 	
 
 //	Cities cities("cityList.txt");
