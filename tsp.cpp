@@ -3,18 +3,19 @@
 #include <cmath>
 #include <vector>
 #include <string>
+#include <sstream>
 using namespace std;
 
 const int radius = 6371; //radius of earth in km
 
 class City {
 	float lat,lon;
-	char const *name;
+	string name;
 
 	public:
 	City ();
-	City (char const *n, float x, float y);
-	const char* getName(void);
+	City (string n, float x, float y);
+	string getName(void);
 	float getLat(void);
 	float getLon(void);
 	float getLatR(void); //Lattitude in radians
@@ -28,12 +29,12 @@ City::City() {
 	name = "Undefined";
 }
 
-City::City (char const *n, float x, float y) {
+City::City (string n, float x, float y) {
 	lat = x;
 	lon = y;
 	name = n;
 }
-const char* City::getName() {
+string City::getName() {
 	return name;
 }
 
@@ -65,34 +66,71 @@ float City::dist(City otherCity) {
 }
 
 class Cities {
-	vector <Cities> carray;
+	vector <City> carray;
+	float **dist;
 	public:
 		Cities(const char* filename);
+		City getCity(int n);
+		float getDist(int i, int j);
 };
 
 Cities::Cities(const char* filename){
-	string line;
-	ifstream myfile (filename);
+	string line, name;
+	float lat,lon;
+	ifstream myfile(filename);
+	istringstream ss;
+	int n;
+
 	if (myfile.is_open())
 	{
-		while (getline (myfile,line,','))
+		getline (myfile,line); //skip first line
+		while (getline (myfile,line))
 		{
-			cout << line << "\n";
+			ss.str(line);
+			ss >> lat;
+			ss >> lon;
+			ss >> name;
+			carray.push_back(City(name,lat,lon));
 		}
 		myfile.close();
 	}
 	else cout << "Unable to open file\n";
+	// Prepare array with city -city  distances 
+	n = carray.size();
+	dist = new float *[n];
+	for (int i=0;i<n;i++) {
+		dist[i] = new float[n];
+	}
+	for (int i=0;i<n;i++) {
+		for (int j=0;j<i;j++) {
+			City city1 = carray[i];
+			City city2 = carray[j];
+			dist[i][j] = city1.dist(city2);
+		}
+	}
 }
 
+City Cities::getCity(int n) {
+	if (n<=carray.size()) return carray[n];
+	else return City(); //return empty city
+			
+}
+
+float Cities::getDist(int i, int j) {
+	if (i < j) {
+		int tmp = i;
+		i = j;
+		j = tmp;
+	}	       
+	return dist[i][j];
+}
 
 int main() 
 {
-	Cities cities("cityList.csv");
-	City Warszawa("Warszawa",52.2333,21.0167);
-	City Wroclaw("Wroclaw",51.1,17.0333);
-
-	cout << Wroclaw.getName() << " to " << Warszawa.getName() <<"\n";
-
-	cout << Wroclaw.dist(Warszawa) <<"\n";
-	cout << Warszawa.dist(Wroclaw) <<"\n";
+	Cities cities("cityList.txt");
+	City Warszawa = cities.getCity(36);
+	City Oslo = cities.getCity(35);
+	cout << Warszawa.getName() << " to " << Oslo.getName() <<"\n";
+	cout << Warszawa.dist(Oslo) <<"\n\n";
+	cout <<"Matrix: "<<cities.getDist(36,35) << "\n";
 }
